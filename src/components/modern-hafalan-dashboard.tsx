@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { logoutAdmin } from "@/lib/auth";
@@ -134,6 +133,12 @@ function Icon({ name, className = "" }: { name: string; className?: string }) {
           <path d="M10 17v2.2A1.8 1.8 0 0 1 8.2 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2.2A1.8 1.8 0 0 1 10 4.8V7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
           <path d="M15 8l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M19 12H9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        </svg>
+      );
+    case "menu":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={base} aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     default:
@@ -271,6 +276,7 @@ function getTodayISO() {
 export default function ModernHafalanDashboard() {
   const router = useRouter();
   const [isAdminState, setIsAdminState] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<UserRole>("anggota");
   const [currentRoleRaw, setCurrentRoleRaw] = useState<UserRole | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -975,7 +981,7 @@ export default function ModernHafalanDashboard() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1800px] px-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1800px] px-3 sm:px-6">
         <aside className="sticky top-0 hidden h-screen max-h-screen w-64 shrink-0 overflow-y-auto border-r border-teal-300/20 bg-linear-to-b from-slate-950 via-cyan-950 to-slate-950/95 px-5 py-6 text-white xl:flex xl:flex-col">
           <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
             <div className="flex items-center gap-3">
@@ -1036,9 +1042,101 @@ export default function ModernHafalanDashboard() {
           </div>
         </aside>
 
+        {isMobileMenuOpen ? (
+          <div className="fixed inset-0 z-50 xl:hidden">
+            <button
+              type="button"
+              aria-label="Tutup menu"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute inset-0 h-full w-full bg-slate-950/55 backdrop-blur-sm"
+            />
+            <aside className="absolute left-0 top-0 flex h-full w-[82%] max-w-[300px] flex-col overflow-y-auto bg-linear-to-b from-slate-950 via-cyan-950 to-slate-950 px-5 py-5 text-white shadow-2xl">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 text-teal-200">
+                    <Icon name="dashboard" className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold tracking-[0.22em] text-teal-200 uppercase">SIM Hafalan</p>
+                    <h1 className="font-display text-xl">LDK Panel</h1>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Tutup menu"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-lg leading-none text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+                <p className="font-semibold text-white">Mode Peran</p>
+                <p className="mt-1">{isAdminState ? `Aktif sebagai ${roleLabels[activeRole]}` : "Anda sedang berada dalam mode pengunjung."}</p>
+              </div>
+
+              <nav className="mt-5 grid gap-2">
+                {(activeRole === "anggota" ? navItems.filter((item) => item.label !== "Jadwal") : navItems).map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/10 hover:text-white"
+                  >
+                    <Icon name={item.icon} className="text-teal-300" />
+                    <span>{item.label}</span>
+                  </a>
+                ))}
+              </nav>
+
+              <div className="mt-auto space-y-3 pt-6">
+                {currentRoleRaw && currentRoleRaw !== "admin" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsPasswordModalOpen(true);
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-semibold text-cyan-100"
+                  >
+                    <Icon name="users" />
+                    Ubah Password
+                  </button>
+                ) : null}
+
+                {currentRoleRaw ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logoutAdmin();
+                      setIsAdminState(false);
+                      setActiveRole("anggota");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    <Icon name="logout" />
+                    Logout
+                  </button>
+                ) : null}
+              </div>
+            </aside>
+          </div>
+        ) : null}
+
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-white/70 bg-[rgba(247,250,252,0.82)] backdrop-blur-xl">
             <div className="flex items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+              <button
+                type="button"
+                aria-label="Buka menu navigasi"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-cyan-200/80 bg-cyan-50 text-cyan-700 shadow-sm xl:hidden"
+              >
+                <Icon name="menu" />
+              </button>
+
               <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-cyan-200/80 bg-cyan-50 px-4 py-3 shadow-sm">
                 <Icon name="search" className="text-cyan-500" />
                 <input
@@ -1482,7 +1580,7 @@ export default function ModernHafalanDashboard() {
                                 <div className="flex items-center justify-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleEditSetoran(item)}
+                                                                       onClick={() => handleEditSetoran(item)}
                                     disabled={isReadonly}
                                     className="rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
@@ -1811,15 +1909,6 @@ export default function ModernHafalanDashboard() {
           </div>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function MiniRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl bg-cyan-50/90 px-3 py-2 text-sm shadow-sm">
-      <span className="text-cyan-700">{label}</span>
-      <span className="font-semibold text-cyan-950">{value}</span>
     </div>
   );
 }
